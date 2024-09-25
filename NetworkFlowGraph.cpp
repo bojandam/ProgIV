@@ -12,6 +12,100 @@ protected:
     bool weighted;
     int default_edge_weight;
 
+
+    int Network_bfs(int s, int t, std::vector<int> & parent, std::vector<std::vector<int>>adj, std::vector<std::vector<int>>capacity) {
+        fill(parent.begin(), parent.end(), -1);
+        parent[s] = -2;
+        std::queue<std::pair<int, int> >q;
+        q.push({ s,__INT_MAX__ });
+
+        while (!q.empty())
+        {
+
+            int cur = q.front().first;
+            int flow = q.front().second;
+            q.pop();
+
+            for (int next : adj[cur]) {
+                if (parent[next] == -1 && capacity[cur][next] != 0) {
+                    parent[next] = cur;
+                    int new_flow = std::min(flow, capacity[cur][next]);
+                    if (next == t)
+                        return new_flow;
+                    q.push({ next, new_flow });
+                }
+            }
+
+        }
+        return 0;
+    }
+    int Network_dfs(int s, int t, std::vector<int> & parent, std::vector<std::vector<int>>adj, std::vector<std::vector<int>>capacity) {
+        fill(parent.begin(), parent.end(), -1);
+        parent[s] = -2;
+        std::stack<std::pair<int, int> >q;
+        q.push({ s,__INT_MAX__ });
+
+        while (!q.empty())
+        {
+
+            int cur = q.top().first;
+            int flow = q.top().second;
+            q.pop();
+
+            for (int next : adj[cur]) {
+                if (parent[next] == -1 && capacity[cur][next] != 0) {
+                    parent[next] = cur;
+                    int new_flow = std::min(flow, capacity[cur][next]);
+                    if (next == t)
+                        return new_flow;
+                    q.push({ next, new_flow });
+                }
+            }
+
+        }
+        return 0;
+    }
+    bool Level_bfs(int s, int t, std::vector<int> & level, std::vector<std::vector<int>>adj, std::vector<std::vector<int>> & capacity) {
+
+        fill(level.begin(), level.end(), -1);
+        level[s] = 0;
+        std::queue<int>q;
+        q.push(s);
+
+        while (!q.empty())
+        {
+            int cur = q.front();
+            q.pop();
+
+            for (int next : adj[cur]) {
+                if (level[next] == -1 && capacity[cur][next] != 0) {
+                    level[next] = level[cur] + 1;
+                    q.push(next);
+                }
+            }
+        }
+        return level[t] != -1;
+    }
+    int Dinic_dfs(int v, int t, std::vector<int> & level, std::vector<std::vector<int>> adj, std::vector<std::vector<int>> & capacity, int rez = 100000)
+    {
+        if (rez == 0) return 0;
+        if (v == t)
+            return rez;
+        for (int next : adj[v]) {
+            if (level[next] == level[v] + 1 && capacity[v][next] != 0) {
+                int flow = Dinic_dfs(next, t, level, adj, capacity, std::min(rez, capacity[v][next]));
+                if (flow != 0) {
+                    capacity[v][next] -= flow;
+                    capacity[next][v] += flow;
+                    return flow;
+                }
+            }
+        }
+        return 0;
+
+    }
+
+
 public:
     virtual int solveEdmondKarp(int, int) = 0;
     virtual int solveFordFulkerson(int, int) = 0;
@@ -68,99 +162,8 @@ public:
             std::cout << std::endl;
         }
     }
-private:
-    int Network_bfs(int s, int t, std::vector<int> & parent, std::vector<std::vector<int>>capacity) {
-        fill(parent.begin(), parent.end(), -1);
-        parent[s] = -2;
-        std::queue<std::pair<int, int> >q;
-        q.push({ s,__INT_MAX__ });
-
-        while (!q.empty())
-        {
-
-            int cur = q.front().first;
-            int flow = q.front().second;
-            q.pop();
-
-            for (int next : adjList[cur]) {
-                if (parent[next] == -1 && capacity[cur][next] != 0) {
-                    parent[next] = cur;
-                    int new_flow = std::min(flow, capacity[cur][next]);
-                    if (next == t)
-                        return new_flow;
-                    q.push({ next, new_flow });
-                }
-            }
-
-        }
-        return 0;
-    }
-    int Network_dfs(int s, int t, std::vector<int> & parent, std::vector<std::vector<int>>capacity) {
-        fill(parent.begin(), parent.end(), -1);
-        parent[s] = -2;
-        std::stack<std::pair<int, int> >q;
-        q.push({ s,__INT_MAX__ });
-
-        while (!q.empty())
-        {
-
-            int cur = q.top().first;
-            int flow = q.top().second;
-            q.pop();
-
-            for (int next : adjList[cur]) {
-                if (parent[next] == -1 && capacity[cur][next] != 0) {
-                    parent[next] = cur;
-                    int new_flow = std::min(flow, capacity[cur][next]);
-                    if (next == t)
-                        return new_flow;
-                    q.push({ next, new_flow });
-                }
-            }
-
-        }
-        return 0;
-    }
-    bool Level_bfs(int s, int t, std::vector<int> & level, std::vector<std::vector<int>>adj, std::vector<std::vector<int>> & capacity) {
-
-        fill(level.begin(), level.end(), -1);
-        level[s] = 0;
-        std::queue<int>q;
-        q.push(s);
-
-        while (!q.empty())
-        {
-            int cur = q.front();
-            q.pop();
-
-            for (int next : adj[cur]) {
-                if (level[next] == -1 && capacity[cur][next] != 0) {
-                    level[next] = level[cur] + 1;
-                    q.push(next);
-                }
-            }
-        }
-        return level[t] != -1;
-    }
-    int Dinic_dfs(int v, int t, std::vector<int> & level, std::vector<std::vector<int>> adj, std::vector<std::vector<int>> & capacity, int rez = 100000)
-    {
-        if (rez == 0) return 0;
-        if (v == t)
-            return rez;
-        for (int next : adj[v]) {
-            if (level[next] == level[v] + 1 && capacity[v][next] != 0) {
-                int flow = Dinic_dfs(next, t, level, adj, capacity, std::min(rez, capacity[v][next]));
-                if (flow != 0) {
-                    capacity[v][next] -= flow;
-                    capacity[next][v] += flow;
-                    return flow;
-                }
-            }
-        }
-        return 0;
-
-    }
 public:
+
     int solveEdmondKarp(int s = 0, int t = -1) {
 
         if (t == -1)t = this->n_vertices - 1;
@@ -168,7 +171,7 @@ public:
         int rez = 0, new_flow;
         std::vector<int> parents(this->n_vertices, -1);
 
-        while (new_flow = Network_bfs(s, t, parents, capacity)) {
+        while (new_flow = Network_bfs(s, t, parents, adjList, capacity)) {
             rez += new_flow;
             int cur = t;
             while (cur != s)
@@ -189,7 +192,7 @@ public:
         int rez = 0, new_flow;
         std::vector<int> parents(this->n_vertices, -1);
 
-        while (new_flow = Network_dfs(s, t, parents, capacity)) {
+        while (new_flow = Network_dfs(s, t, parents, adjList, capacity)) {
             rez += new_flow;
             int cur = t;
             while (cur != s)
@@ -250,102 +253,7 @@ public:
             std::cout << std::endl;
         }
     }
-private:
-    int Network_bfs(int s, int t, std::vector<int> & parent, std::vector<std::vector<int>>capacity) {
-        fill(parent.begin(), parent.end(), -1);
-        parent[s] = -2;
-        std::queue<std::pair<int, int> >q;
-        q.push({ s,__INT_MAX__ });
 
-        while (!q.empty())
-        {
-
-            int cur = q.front().first;
-            int flow = q.front().second;
-            q.pop();
-
-            for (std::pair<int, int> el : adjList[cur]) {
-                int next = el.first;
-                if (parent[next] == -1 && capacity[cur][next] != 0) {
-                    parent[next] = cur;
-                    int new_flow = std::min(flow, capacity[cur][next]);
-                    if (next == t)
-                        return new_flow;
-                    q.push({ next, new_flow });
-                }
-            }
-
-        }
-        return 0;
-    }
-    int Network_dfs(int s, int t, std::vector<int> & parent, std::vector<std::vector<int>>capacity) {
-        fill(parent.begin(), parent.end(), -1);
-        parent[s] = -2;
-        std::stack<std::pair<int, int> >q;
-        q.push({ s,__INT_MAX__ });
-
-        while (!q.empty())
-        {
-
-            int cur = q.top().first;
-            int flow = q.top().second;
-            q.pop();
-
-            for (std::pair<int, int> el : adjList[cur]) {
-                int next = el.first;
-                if (parent[next] == -1 && capacity[cur][next] != 0) {
-                    parent[next] = cur;
-                    int new_flow = std::min(flow, capacity[cur][next]);
-                    if (next == t)
-                        return new_flow;
-                    q.push({ next, new_flow });
-                }
-            }
-
-        }
-        return 0;
-    }
-    bool Level_bfs(int s, int t, std::vector<int> & level, std::vector<std::vector<std::pair<int, int>>> adj, std::vector<std::vector<int>> & capacity) {
-
-        fill(level.begin(), level.end(), -1);
-        level[s] = 0;
-        std::queue<int>q;
-        q.push(s);
-
-        while (!q.empty())
-        {
-            int cur = q.front();
-            q.pop();
-
-            for (auto el : adj[cur]) {
-                int next = el.first;
-                if (level[next] == -1 && capacity[cur][next] != 0) {
-                    level[next] = level[cur] + 1;
-                    q.push(next);
-                }
-            }
-        }
-        return level[t] != -1;
-    }
-    int Dinic_dfs(int v, int t, std::vector<int> & level, std::vector<std::vector<std::pair<int, int>>> adj, std::vector<std::vector<int>> & capacity, int rez = 100000)
-    {
-        if (rez == 0) return 0;
-        if (v == t)
-            return rez;
-        for (auto el : adj[v]) {
-            int next = el.first;
-            if (level[next] == level[v] + 1 && capacity[v][next] != 0) {
-                int flow = Dinic_dfs(next, t, level, adj, capacity, std::min(rez, capacity[v][next]));
-                if (flow != 0) {
-                    capacity[v][next] -= flow;
-                    capacity[next][v] += flow;
-                    return flow;
-                }
-            }
-        }
-        return 0;
-
-    }
 public:
     int solveEdmondKarp(int s = 0, int t = -1) {
 
@@ -355,10 +263,17 @@ public:
             for (std::pair<int, int> el : adjList[i])
                 capacity[i][el.first] = el.second;
 
+        std::vector<std::vector<int>> temp_adj(n_vertices);
+        for (int i = 0; i < n_vertices; i++) {
+            for (auto pr : adjList[i]) {
+                temp_adj[i].push_back(pr.first);
+            }
+        }
+
         int rez = 0, new_flow;
         std::vector<int> parents(this->n_vertices, -1);
 
-        while (new_flow = Network_bfs(s, t, parents, capacity)) {
+        while (new_flow = Network_bfs(s, t, parents, temp_adj, capacity)) {
             rez += new_flow;
             int cur = t;
             while (cur != s)
@@ -380,10 +295,17 @@ public:
             for (std::pair<int, int> el : adjList[i])
                 capacity[i][el.first] = el.second;
 
+        std::vector<std::vector<int>> temp_adj(n_vertices);
+        for (int i = 0; i < n_vertices; i++) {
+            for (auto pr : adjList[i]) {
+                temp_adj[i].push_back(pr.first);
+            }
+        }
+
         int rez = 0, new_flow;
         std::vector<int> parents(this->n_vertices, -1);
 
-        while (new_flow = Network_dfs(s, t, parents, capacity)) {
+        while (new_flow = Network_dfs(s, t, parents, temp_adj, capacity)) {
             rez += new_flow;
             int cur = t;
             while (cur != s)
@@ -404,11 +326,18 @@ public:
             for (std::pair<int, int> el : adjList[i])
                 capacity[i][el.first] = el.second;
 
+        std::vector<std::vector<int>> temp_adj(n_vertices);
+        for (int i = 0; i < n_vertices; i++) {
+            for (auto pr : adjList[i]) {
+                temp_adj[i].push_back(pr.first);
+            }
+        }
+
         int rez_flow = 0, new_flow;
         std::vector<int> level(this->n_vertices, -1);
 
-        while (Level_bfs(s, t, level, adjList, capacity))
-            while (new_flow = Dinic_dfs(s, t, level, adjList, capacity))
+        while (Level_bfs(s, t, level, temp_adj, capacity))
+            while (new_flow = Dinic_dfs(s, t, level, temp_adj, capacity))
                 rez_flow += new_flow;
 
         return rez_flow;
