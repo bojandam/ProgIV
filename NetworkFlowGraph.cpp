@@ -106,6 +106,52 @@ protected:
     }
 
 
+    int EdmondKarp(int s, int t, std::vector<std::vector<int>> & adj, std::vector<std::vector<int>> & capacity) {
+        int rez = 0, new_flow;
+        std::vector<int> parents(n_vertices, -1);
+
+        while (new_flow = Network_bfs(s, t, parents, adj, capacity)) {
+            rez += new_flow;
+            int cur = t;
+            while (cur != s)
+            {
+                int prev = parents[cur];
+                capacity[prev][cur] -= new_flow;
+                capacity[cur][prev] += new_flow;
+                cur = prev;
+            }
+        }
+        return rez;
+    }
+    int FordFulkerson(int s, int t, std::vector<std::vector<int>> & adj, std::vector<std::vector<int>> & capacity) {
+        int rez = 0, new_flow;
+        std::vector<int> parents(n_vertices, -1);
+
+        while (new_flow = Network_dfs(s, t, parents, adj, capacity)) {
+            rez += new_flow;
+            int cur = t;
+            while (cur != s)
+            {
+                int prev = parents[cur];
+                capacity[prev][cur] -= new_flow;
+                capacity[cur][prev] += new_flow;
+                cur = prev;
+            }
+        }
+        return rez;
+    }
+    int Dinic(int s, int t, std::vector<std::vector<int>> & adj, std::vector<std::vector<int>> & capacity) {
+
+        int rez_flow = 0, new_flow;
+        std::vector<int> level(n_vertices, -1);
+
+        while (Level_bfs(s, t, level, adj, capacity))
+            while (new_flow = Dinic_dfs(s, t, level, adj, capacity))
+                rez_flow += new_flow;
+
+        return rez_flow;
+    }
+
 public:
     virtual int solveEdmondKarp(int, int) = 0;
     virtual int solveFordFulkerson(int, int) = 0;
@@ -168,57 +214,28 @@ public:
 
         if (t == -1)t = this->n_vertices - 1;
         std::vector<std::vector<int>> capacity(matrix);
-        int rez = 0, new_flow;
-        std::vector<int> parents(this->n_vertices, -1);
 
-        while (new_flow = Network_bfs(s, t, parents, adjList, capacity)) {
-            rez += new_flow;
-            int cur = t;
-            while (cur != s)
-            {
-                int prev = parents[cur];
-                capacity[prev][cur] -= new_flow;
-                capacity[cur][prev] += new_flow;
-                cur = prev;
-            }
-        }
-        return rez;
+        return EdmondKarp(s, t, adjList, capacity);
     }
 
     int solveFordFulkerson(int s = 0, int t = -1) {
 
         if (t == -1)t = this->n_vertices - 1;
         std::vector<std::vector<int>> capacity(matrix);
+
         int rez = 0, new_flow;
         std::vector<int> parents(this->n_vertices, -1);
 
-        while (new_flow = Network_dfs(s, t, parents, adjList, capacity)) {
-            rez += new_flow;
-            int cur = t;
-            while (cur != s)
-            {
-                int prev = parents[cur];
-                capacity[prev][cur] -= new_flow;
-                capacity[cur][prev] += new_flow;
-                cur = prev;
-            }
-        }
-        return rez;
+        return FordFulkerson(s, t, adjList, capacity);
     }
 
     int solveDinic(int s = 0, int t = -1) {
 
-        if (t == -1)t = this->n_vertices - 1;
+        if (t == -1)t = n_vertices - 1;
+
         std::vector<std::vector<int>> capacity(matrix);
 
-        int rez_flow = 0, new_flow;
-        std::vector<int> level(this->n_vertices, -1);
-
-        while (Level_bfs(s, t, level, adjList, capacity))
-            while (new_flow = Dinic_dfs(s, t, level, adjList, capacity))
-                rez_flow += new_flow;
-
-        return rez_flow;
+        return Dinic(s, t, adjList, capacity);
     }
 };
 
@@ -270,23 +287,8 @@ public:
             }
         }
 
-        int rez = 0, new_flow;
-        std::vector<int> parents(this->n_vertices, -1);
-
-        while (new_flow = Network_bfs(s, t, parents, temp_adj, capacity)) {
-            rez += new_flow;
-            int cur = t;
-            while (cur != s)
-            {
-                int prev = parents[cur];
-                capacity[prev][cur] -= new_flow;
-                capacity[cur][prev] += new_flow;
-                cur = prev;
-            }
-        }
-        return rez;
+        return EdmondKarp(s, t, temp_adj, capacity);
     }
-
     int solveFordFulkerson(int s = 0, int t = -1) {
 
         if (t == -1)t = this->n_vertices - 1;
@@ -302,25 +304,11 @@ public:
             }
         }
 
-        int rez = 0, new_flow;
-        std::vector<int> parents(this->n_vertices, -1);
-
-        while (new_flow = Network_dfs(s, t, parents, temp_adj, capacity)) {
-            rez += new_flow;
-            int cur = t;
-            while (cur != s)
-            {
-                int prev = parents[cur];
-                capacity[prev][cur] -= new_flow;
-                capacity[cur][prev] += new_flow;
-                cur = prev;
-            }
-        }
-        return rez;
+        return FordFulkerson(s, t, temp_adj, capacity);
     }
     int solveDinic(int s = 0, int t = -1) {
 
-        if (t == -1)t = this->n_vertices - 1;
+        if (t == -1)t = n_vertices - 1;
         std::vector<std::vector<int>> capacity(n_vertices, std::vector<int>(n_vertices, 0));
         for (int i = 0; i < n_vertices; i++)
             for (std::pair<int, int> el : adjList[i])
@@ -333,14 +321,7 @@ public:
             }
         }
 
-        int rez_flow = 0, new_flow;
-        std::vector<int> level(this->n_vertices, -1);
-
-        while (Level_bfs(s, t, level, temp_adj, capacity))
-            while (new_flow = Dinic_dfs(s, t, level, temp_adj, capacity))
-                rez_flow += new_flow;
-
-        return rez_flow;
+        return Dinic(s, t, temp_adj, capacity);
     }
 };
 
@@ -365,6 +346,34 @@ int main() {
     std::cout << grf1.solveDinic() << " ";
 
 
-
     return 0;
+    /*
+
+    4
+    5
+    0 1 3
+    0 2 2
+    1 2 5
+    1 3 2
+    2 3 3
+
+    ans: 5
+
+    6 9
+    0 1 7
+    0 4 4
+    1 2 5
+    1 3 3
+    2 5 8
+    3 2 3
+    3 5 5
+    4 1 3
+    4 3 2
+
+    ans: 10
+
+    */
+
+
+
 }
