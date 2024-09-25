@@ -15,6 +15,7 @@ protected:
 public:
     virtual int solveEdmondKarp(int, int) = 0;
     virtual int solveFordFulkerson(int, int) = 0;
+    virtual int solveDinic(int, int) = 0;
 
     virtual void add_edge(int pFrom, int pTo) = 0;
     virtual void add_edge(int pFrom, int pTo, int weight) = 0;
@@ -120,6 +121,45 @@ private:
         }
         return 0;
     }
+    bool Level_bfs(int s, int t, std::vector<int> & level, std::vector<std::vector<int>>adj, std::vector<std::vector<int>> & capacity) {
+
+        fill(level.begin(), level.end(), -1);
+        level[s] = 0;
+        std::queue<int>q;
+        q.push(s);
+
+        while (!q.empty())
+        {
+            int cur = q.front();
+            q.pop();
+
+            for (int next : adj[cur]) {
+                if (level[next] == -1 && capacity[cur][next] != 0) {
+                    level[next] = level[cur] + 1;
+                    q.push(next);
+                }
+            }
+        }
+        return level[t] != -1;
+    }
+    int Dinic_dfs(int v, int t, std::vector<int> & level, std::vector<std::vector<int>> adj, std::vector<std::vector<int>> & capacity, int rez = 100000)
+    {
+        if (rez == 0) return 0;
+        if (v == t)
+            return rez;
+        for (int next : adj[v]) {
+            if (level[next] == level[v] + 1 && capacity[v][next] != 0) {
+                int flow = Dinic_dfs(next, t, level, adj, capacity, std::min(rez, capacity[v][next]));
+                if (flow != 0) {
+                    capacity[v][next] -= flow;
+                    capacity[next][v] += flow;
+                    return flow;
+                }
+            }
+        }
+        return 0;
+
+    }
 public:
     int solveEdmondKarp(int s = 0, int t = -1) {
 
@@ -163,6 +203,20 @@ public:
         return rez;
     }
 
+    int solveDinic(int s = 0, int t = -1) {
+
+        if (t == -1)t = this->n_vertices - 1;
+        std::vector<std::vector<int>> capacity(matrix);
+
+        int rez_flow = 0, new_flow;
+        std::vector<int> level(this->n_vertices, -1);
+
+        while (Level_bfs(s, t, level, adjList, capacity))
+            while (new_flow = Dinic_dfs(s, t, level, adjList, capacity))
+                rez_flow += new_flow;
+
+        return rez_flow;
+    }
 };
 
 class ListGraph : public Graph {
@@ -251,6 +305,47 @@ private:
         }
         return 0;
     }
+    bool Level_bfs(int s, int t, std::vector<int> & level, std::vector<std::vector<std::pair<int, int>>> adj, std::vector<std::vector<int>> & capacity) {
+
+        fill(level.begin(), level.end(), -1);
+        level[s] = 0;
+        std::queue<int>q;
+        q.push(s);
+
+        while (!q.empty())
+        {
+            int cur = q.front();
+            q.pop();
+
+            for (auto el : adj[cur]) {
+                int next = el.first;
+                if (level[next] == -1 && capacity[cur][next] != 0) {
+                    level[next] = level[cur] + 1;
+                    q.push(next);
+                }
+            }
+        }
+        return level[t] != -1;
+    }
+    int Dinic_dfs(int v, int t, std::vector<int> & level, std::vector<std::vector<std::pair<int, int>>> adj, std::vector<std::vector<int>> & capacity, int rez = 100000)
+    {
+        if (rez == 0) return 0;
+        if (v == t)
+            return rez;
+        for (auto el : adj[v]) {
+            int next = el.first;
+            if (level[next] == level[v] + 1 && capacity[v][next] != 0) {
+                int flow = Dinic_dfs(next, t, level, adj, capacity, std::min(rez, capacity[v][next]));
+                if (flow != 0) {
+                    capacity[v][next] -= flow;
+                    capacity[next][v] += flow;
+                    return flow;
+                }
+            }
+        }
+        return 0;
+
+    }
 public:
     int solveEdmondKarp(int s = 0, int t = -1) {
 
@@ -301,7 +396,23 @@ public:
         }
         return rez;
     }
+    int solveDinic(int s = 0, int t = -1) {
 
+        if (t == -1)t = this->n_vertices - 1;
+        std::vector<std::vector<int>> capacity(n_vertices, std::vector<int>(n_vertices, 0));
+        for (int i = 0; i < n_vertices; i++)
+            for (std::pair<int, int> el : adjList[i])
+                capacity[i][el.first] = el.second;
+
+        int rez_flow = 0, new_flow;
+        std::vector<int> level(this->n_vertices, -1);
+
+        while (Level_bfs(s, t, level, adjList, capacity))
+            while (new_flow = Dinic_dfs(s, t, level, adjList, capacity))
+                rez_flow += new_flow;
+
+        return rez_flow;
+    }
 };
 
 int main() {
@@ -319,8 +430,11 @@ int main() {
 
     std::cout << grf.solveEdmondKarp() << " ";
     std::cout << grf.solveFordFulkerson() << " ";
+    std::cout << grf.solveDinic() << " ";
     std::cout << grf1.solveEdmondKarp() << " ";
-    std::cout << grf1.solveFordFulkerson();
+    std::cout << grf1.solveFordFulkerson() << " ";
+    std::cout << grf1.solveDinic() << " ";
+
 
 
     return 0;
