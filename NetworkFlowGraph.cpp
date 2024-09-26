@@ -2,7 +2,10 @@
 #include<vector>
 #include<queue>
 #include<stack>
-//class NetworkGraph : public Graph {}
+
+
+using std::vector;
+
 
 class Graph {
 protected:
@@ -13,7 +16,7 @@ protected:
     int default_edge_weight;
 
 
-    int Network_bfs(int s, int t, std::vector<int> & parent, std::vector<std::vector<int>>adj, std::vector<std::vector<int>>capacity) {
+    int Network_bfs(int s, int t, vector<int> & parent, vector<vector<int>>adj, vector<vector<int>>capacity) {
         fill(parent.begin(), parent.end(), -1);
         parent[s] = -2;
         std::queue<std::pair<int, int> >q;
@@ -39,7 +42,7 @@ protected:
         }
         return 0;
     }
-    int Network_dfs(int s, int t, std::vector<int> & parent, std::vector<std::vector<int>>adj, std::vector<std::vector<int>>capacity) {
+    int Network_dfs(int s, int t, vector<int> & parent, vector<vector<int>>adj, vector<vector<int>>capacity) {
         fill(parent.begin(), parent.end(), -1);
         parent[s] = -2;
         std::stack<std::pair<int, int> >q;
@@ -65,7 +68,7 @@ protected:
         }
         return 0;
     }
-    bool Level_bfs(int s, int t, std::vector<int> & level, std::vector<std::vector<int>>adj, std::vector<std::vector<int>> & capacity) {
+    bool Level_bfs(int s, int t, vector<int> & level, vector<vector<int>>adj, vector<vector<int>> capacity) {
 
         fill(level.begin(), level.end(), -1);
         level[s] = 0;
@@ -86,7 +89,7 @@ protected:
         }
         return level[t] != -1;
     }
-    int Dinic_dfs(int v, int t, std::vector<int> & level, std::vector<std::vector<int>> adj, std::vector<std::vector<int>> & capacity, int rez = 100000)
+    int Dinic_dfs(int v, int t, vector<int> & level, vector<vector<int>> adj, vector<vector<int>> & capacity, int rez = 100000)
     {
         if (rez == 0) return 0;
         if (v == t)
@@ -106,9 +109,9 @@ protected:
     }
 
 
-    int EdmondKarp(int s, int t, std::vector<std::vector<int>> & adj, std::vector<std::vector<int>> & capacity) {
+    int EdmondKarp(int s, int t, vector<vector<int>> & adj, vector<vector<int>> & capacity) {
         int rez = 0, new_flow;
-        std::vector<int> parents(n_vertices, -1);
+        vector<int> parents(n_vertices, -1);
 
         while (new_flow = Network_bfs(s, t, parents, adj, capacity)) {
             rez += new_flow;
@@ -123,9 +126,9 @@ protected:
         }
         return rez;
     }
-    int FordFulkerson(int s, int t, std::vector<std::vector<int>> & adj, std::vector<std::vector<int>> & capacity) {
+    int FordFulkerson(int s, int t, vector<vector<int>> & adj, vector<vector<int>> & capacity) {
         int rez = 0, new_flow;
-        std::vector<int> parents(n_vertices, -1);
+        vector<int> parents(n_vertices, -1);
 
         while (new_flow = Network_dfs(s, t, parents, adj, capacity)) {
             rez += new_flow;
@@ -140,10 +143,10 @@ protected:
         }
         return rez;
     }
-    int Dinic(int s, int t, std::vector<std::vector<int>> & adj, std::vector<std::vector<int>> & capacity) {
+    int Dinic(int s, int t, vector<vector<int>> & adj, vector<vector<int>> & capacity) {
 
         int rez_flow = 0, new_flow;
-        std::vector<int> level(n_vertices, -1);
+        vector<int> level(n_vertices, -1);
 
         while (Level_bfs(s, t, level, adj, capacity))
             while (new_flow = Dinic_dfs(s, t, level, adj, capacity))
@@ -152,10 +155,30 @@ protected:
         return rez_flow;
     }
 
+    vector<std::pair<int, int> > stCut(int s, int t, vector<vector<int>> & adj, vector<vector<int>> & capacity) {
+        Dinic(s, t, adj, capacity);
+        vector<int> level(n_vertices, -1);
+        Level_bfs(s, t, level, adj, capacity);
+        vector<std::pair<int, int> > cutEdges;
+        for (int v = 0; v < n_vertices; v++) {
+            if (level[v] != -1) {
+                for (int u : adj[v]) {
+                    if (level[u] == -1) {
+                        cutEdges.push_back({ v,u });
+                        std::cout << v << " -> " << u << ", ";
+                    }
+                }
+            }
+        }
+        return cutEdges;
+
+    }
 public:
     virtual int solveEdmondKarp(int, int) = 0;
     virtual int solveFordFulkerson(int, int) = 0;
     virtual int solveDinic(int, int) = 0;
+    virtual vector<std::pair<int, int> > solveSTCut(int, int) = 0;
+
 
     virtual void add_edge(int pFrom, int pTo) = 0;
     virtual void add_edge(int pFrom, int pTo, int weight) = 0;
@@ -172,36 +195,36 @@ class MatrixGraph : public Graph {
 public:
 
 
-    std::vector<std::vector<int>> matrix;
-    std::vector<std::vector<int>> adjList;
+    vector<vector<int>> matrix;
+    vector<vector<int>> adjList;
 
-    MatrixGraph(int n_vertices = 0, bool directional = true, bool weighted = false, int default_edge_weight = 1) : Graph(n_vertices, directional, weighted, default_edge_weight), matrix(n_vertices, std::vector<int>(n_vertices, 0)), adjList(n_vertices) {}
+    MatrixGraph(int n_vertices = 0, bool directional = true, bool weighted = false, int default_edge_weight = 1) : Graph(n_vertices, directional, weighted, default_edge_weight), matrix(n_vertices, vector<int>(n_vertices, 0)), adjList(n_vertices) {}
 
     void add_edge(int pFrom, int pTo, int weight) {
         matrix[pFrom][pTo] = weight;
         adjList[pFrom].push_back(pTo);
 
-        if (!this->directional) {
+        if (!directional) {
             matrix[pTo][pFrom] = weight;
             adjList[pTo].push_back(pFrom);
         }
     }
-    void add_edge(int pFrom, int pTo) { add_edge(pFrom, pTo, this->default_edge_weight); }
+    void add_edge(int pFrom, int pTo) { add_edge(pFrom, pTo, default_edge_weight); }
     void add_vertex() {
-        this->n_vertices++;
-        for (std::vector<int> vec : matrix)
+        n_vertices++;
+        for (vector<int> vec : matrix)
             vec.push_back(0);
-        matrix.push_back(std::vector<int>(this->n_vertices, 0));
-        adjList.push_back(std::vector<int>());
+        matrix.push_back(vector<int>(n_vertices, 0));
+        adjList.push_back(vector<int>());
     }
     void print() {
-        for (int i = 0; i < this->n_vertices; i++) {
-            for (int j = 0; j < this->n_vertices; j++) {
+        for (int i = 0; i < n_vertices; i++) {
+            for (int j = 0; j < n_vertices; j++) {
                 std::cout << matrix[i][j] << " ";
             }
             std::cout << std::endl;
         }
-        for (int i = 0; i < this->n_vertices; i++) {
+        for (int i = 0; i < n_vertices; i++) {
             for (int el : adjList[i]) {
                 std::cout << el << " ";
             }
@@ -212,19 +235,19 @@ public:
 
     int solveEdmondKarp(int s = 0, int t = -1) {
 
-        if (t == -1)t = this->n_vertices - 1;
-        std::vector<std::vector<int>> capacity(matrix);
+        if (t == -1)t = n_vertices - 1;
+        vector<vector<int>> capacity(matrix);
 
         return EdmondKarp(s, t, adjList, capacity);
     }
 
     int solveFordFulkerson(int s = 0, int t = -1) {
 
-        if (t == -1)t = this->n_vertices - 1;
-        std::vector<std::vector<int>> capacity(matrix);
+        if (t == -1)t = n_vertices - 1;
+        vector<vector<int>> capacity(matrix);
 
         int rez = 0, new_flow;
-        std::vector<int> parents(this->n_vertices, -1);
+        vector<int> parents(n_vertices, -1);
 
         return FordFulkerson(s, t, adjList, capacity);
     }
@@ -233,10 +256,20 @@ public:
 
         if (t == -1)t = n_vertices - 1;
 
-        std::vector<std::vector<int>> capacity(matrix);
+        vector<vector<int>> capacity(matrix);
 
         return Dinic(s, t, adjList, capacity);
     }
+
+    vector<std::pair<int, int> > solveSTCut(int s = 0, int t = -1) {
+
+        if (t == -1)t = n_vertices - 1;
+
+        vector<vector<int>> capacity(matrix);
+
+        return stCut(s, t, adjList, capacity);
+    }
+
 };
 
 class ListGraph : public Graph {
@@ -244,7 +277,7 @@ public:
 
 
 
-    std::vector<std::vector<std::pair<int, int> >> adjList;
+    vector<vector<std::pair<int, int> >> adjList;
 
     ListGraph(int n_vertices = 0, bool directional = true, bool weighted = false, int default_edge_weight = 1) : Graph(n_vertices, directional, weighted, default_edge_weight), adjList(n_vertices) {}
 
@@ -252,18 +285,18 @@ public:
 
         adjList[pFrom].push_back({ pTo,weight });
 
-        if (!this->directional) {
+        if (!directional) {
             adjList[pTo].push_back({ pFrom,weight });
         }
     }
-    void add_edge(int pFrom, int pTo) { add_edge(pFrom, pTo, this->default_edge_weight); }
+    void add_edge(int pFrom, int pTo) { add_edge(pFrom, pTo, default_edge_weight); }
     void add_vertex() {
-        this->n_vertices++;
-        adjList.push_back(std::vector<std::pair<int, int>>());
+        n_vertices++;
+        adjList.push_back(vector<std::pair<int, int>>());
     }
     void print() {
 
-        for (int i = 0; i < this->n_vertices; i++) {
+        for (int i = 0; i < n_vertices; i++) {
             for (std::pair<int, int> el : adjList[i]) {
                 std::cout << el.first << " " << el.second;
             }
@@ -274,13 +307,13 @@ public:
 public:
     int solveEdmondKarp(int s = 0, int t = -1) {
 
-        if (t == -1)t = this->n_vertices - 1;
-        std::vector<std::vector<int>> capacity(n_vertices, std::vector<int>(n_vertices, 0));
+        if (t == -1)t = n_vertices - 1;
+        vector<vector<int>> capacity(n_vertices, vector<int>(n_vertices, 0));
         for (int i = 0; i < n_vertices; i++)
             for (std::pair<int, int> el : adjList[i])
                 capacity[i][el.first] = el.second;
 
-        std::vector<std::vector<int>> temp_adj(n_vertices);
+        vector<vector<int>> temp_adj(n_vertices);
         for (int i = 0; i < n_vertices; i++) {
             for (auto pr : adjList[i]) {
                 temp_adj[i].push_back(pr.first);
@@ -291,13 +324,13 @@ public:
     }
     int solveFordFulkerson(int s = 0, int t = -1) {
 
-        if (t == -1)t = this->n_vertices - 1;
-        std::vector<std::vector<int>> capacity(n_vertices, std::vector<int>(n_vertices, 0));
+        if (t == -1)t = n_vertices - 1;
+        vector<vector<int>> capacity(n_vertices, vector<int>(n_vertices, 0));
         for (int i = 0; i < n_vertices; i++)
             for (std::pair<int, int> el : adjList[i])
                 capacity[i][el.first] = el.second;
 
-        std::vector<std::vector<int>> temp_adj(n_vertices);
+        vector<vector<int>> temp_adj(n_vertices);
         for (int i = 0; i < n_vertices; i++) {
             for (auto pr : adjList[i]) {
                 temp_adj[i].push_back(pr.first);
@@ -309,12 +342,12 @@ public:
     int solveDinic(int s = 0, int t = -1) {
 
         if (t == -1)t = n_vertices - 1;
-        std::vector<std::vector<int>> capacity(n_vertices, std::vector<int>(n_vertices, 0));
+        vector<vector<int>> capacity(n_vertices, vector<int>(n_vertices, 0));
         for (int i = 0; i < n_vertices; i++)
             for (std::pair<int, int> el : adjList[i])
                 capacity[i][el.first] = el.second;
 
-        std::vector<std::vector<int>> temp_adj(n_vertices);
+        vector<vector<int>> temp_adj(n_vertices);
         for (int i = 0; i < n_vertices; i++) {
             for (auto pr : adjList[i]) {
                 temp_adj[i].push_back(pr.first);
@@ -323,6 +356,22 @@ public:
 
         return Dinic(s, t, temp_adj, capacity);
     }
+    vector<std::pair<int, int> > solveSTCut(int s = 0, int t = -1) {
+        if (t == -1)t = n_vertices - 1;
+        vector<vector<int>> capacity(n_vertices, vector<int>(n_vertices, 0));
+        for (int i = 0; i < n_vertices; i++)
+            for (std::pair<int, int> el : adjList[i])
+                capacity[i][el.first] = el.second;
+
+        vector<vector<int>> temp_adj(n_vertices);
+        for (int i = 0; i < n_vertices; i++) {
+            for (auto pr : adjList[i]) {
+                temp_adj[i].push_back(pr.first);
+            }
+        }
+        return stCut(s, t, temp_adj, capacity);
+    }
+
 };
 
 int main() {
@@ -340,11 +389,12 @@ int main() {
 
     std::cout << grf.solveEdmondKarp() << " ";
     std::cout << grf.solveFordFulkerson() << " ";
-    std::cout << grf.solveDinic() << " ";
+    std::cout << grf.solveDinic() << "\n";
+    grf.solveSTCut(); std::cout << std::endl;
     std::cout << grf1.solveEdmondKarp() << " ";
     std::cout << grf1.solveFordFulkerson() << " ";
-    std::cout << grf1.solveDinic() << " ";
-
+    std::cout << grf1.solveDinic() << "\n";
+    grf1.solveSTCut(); std::cout << std::endl;
 
     return 0;
     /*
