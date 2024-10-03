@@ -212,7 +212,7 @@ public:
     void add_edge(int pFrom, int pTo) { add_edge(pFrom, pTo, default_edge_weight); }
     void add_vertex() {
         n_vertices++;
-        for (vector<int> vec : matrix)
+        for (vector<int> & vec : matrix)
             vec.push_back(0);
         matrix.push_back(vector<int>(n_vertices, 0));
         adjList.push_back(vector<int>());
