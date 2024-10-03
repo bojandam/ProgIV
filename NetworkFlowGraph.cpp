@@ -236,6 +236,7 @@ public:
     int solveEdmondKarp(int s = 0, int t = -1) {
 
         if (t == -1)t = n_vertices - 1;
+
         vector<vector<int>> capacity(matrix);
 
         return EdmondKarp(s, t, adjList, capacity);
@@ -244,10 +245,8 @@ public:
     int solveFordFulkerson(int s = 0, int t = -1) {
 
         if (t == -1)t = n_vertices - 1;
-        vector<vector<int>> capacity(matrix);
 
-        int rez = 0, new_flow;
-        vector<int> parents(n_vertices, -1);
+        vector<vector<int>> capacity(matrix);
 
         return FordFulkerson(s, t, adjList, capacity);
     }
@@ -304,71 +303,59 @@ public:
         }
     }
 
-public:
-    int solveEdmondKarp(int s = 0, int t = -1) {
+private:
+    vector<vector<int>> capacity;
+    vector<vector<int>> temp_adj;
 
-        if (t == -1)t = n_vertices - 1;
-        vector<vector<int>> capacity(n_vertices, vector<int>(n_vertices, 0));
+    void prepare_capacity() {
+        capacity = vector<vector<int>>(n_vertices, vector<int>(n_vertices, 0));
         for (int i = 0; i < n_vertices; i++)
             for (std::pair<int, int> el : adjList[i])
                 capacity[i][el.first] = el.second;
-
-        vector<vector<int>> temp_adj(n_vertices);
+    }
+    void prepare_temp_adj() {
+        temp_adj = vector<vector<int>>(n_vertices);
         for (int i = 0; i < n_vertices; i++) {
             for (auto pr : adjList[i]) {
                 temp_adj[i].push_back(pr.first);
             }
         }
+    }
+
+public:
+    int solveEdmondKarp(int s = 0, int t = -1) {
+
+        if (t == -1)t = n_vertices - 1;
+
+        prepare_capacity();
+        prepare_temp_adj();
 
         return EdmondKarp(s, t, temp_adj, capacity);
     }
     int solveFordFulkerson(int s = 0, int t = -1) {
 
         if (t == -1)t = n_vertices - 1;
-        vector<vector<int>> capacity(n_vertices, vector<int>(n_vertices, 0));
-        for (int i = 0; i < n_vertices; i++)
-            for (std::pair<int, int> el : adjList[i])
-                capacity[i][el.first] = el.second;
 
-        vector<vector<int>> temp_adj(n_vertices);
-        for (int i = 0; i < n_vertices; i++) {
-            for (auto pr : adjList[i]) {
-                temp_adj[i].push_back(pr.first);
-            }
-        }
+        prepare_capacity();
+        prepare_temp_adj();
 
         return FordFulkerson(s, t, temp_adj, capacity);
     }
     int solveDinic(int s = 0, int t = -1) {
 
         if (t == -1)t = n_vertices - 1;
-        vector<vector<int>> capacity(n_vertices, vector<int>(n_vertices, 0));
-        for (int i = 0; i < n_vertices; i++)
-            for (std::pair<int, int> el : adjList[i])
-                capacity[i][el.first] = el.second;
 
-        vector<vector<int>> temp_adj(n_vertices);
-        for (int i = 0; i < n_vertices; i++) {
-            for (auto pr : adjList[i]) {
-                temp_adj[i].push_back(pr.first);
-            }
-        }
+        prepare_capacity();
+        prepare_temp_adj();
 
         return Dinic(s, t, temp_adj, capacity);
     }
     vector<std::pair<int, int> > solveSTCut(int s = 0, int t = -1) {
         if (t == -1)t = n_vertices - 1;
-        vector<vector<int>> capacity(n_vertices, vector<int>(n_vertices, 0));
-        for (int i = 0; i < n_vertices; i++)
-            for (std::pair<int, int> el : adjList[i])
-                capacity[i][el.first] = el.second;
 
-        vector<vector<int>> temp_adj(n_vertices);
-        for (int i = 0; i < n_vertices; i++) {
-            for (auto pr : adjList[i]) {
-                temp_adj[i].push_back(pr.first);
-            }
-        }
+        prepare_capacity();
+        prepare_temp_adj();
+
         return stCut(s, t, temp_adj, capacity);
     }
 
