@@ -108,6 +108,39 @@ protected:
 
     }
 
+    void push(int u, int v, vector<int> & excess, std::queue<int> & excess_vertices, vector<vector<int>> & capacity, vector<vector<int>> & flow) {
+        int d = std::min(excess[u], capacity[u][v] - flow[u][v]);
+        flow[u][v] += d;
+        flow[v][u] -= d;
+        excess[u] -= d;
+        excess[v] += d;
+        if (d && excess[v] == d)
+            excess_vertices.push(v);
+    }
+    void relabel(int u, vector<int> & height, vector<vector<int>> & capacity, vector<vector<int>> & flow) {
+        int d = 1000000000;
+        for (int i = 0; i < n_vertices; i++) {
+            if (capacity[u][i] - flow[u][i] > 0)
+                d = std::min(d, height[i]);
+        }
+        if (d < 1000000000)
+            height[u] = d + 1;
+    }
+    void discharge(int u, vector<int> & excess, vector<int> & seen, vector<int> & height, std::queue<int> & excess_vertices, vector<vector<int>> & capacity, vector<vector<int>> & flow) {
+        while (excess[u] > 0) {
+            if (seen[u] < n_vertices) {
+                int v = seen[u];
+                if (capacity[u][v] - flow[u][v] > 0 && height[u] > height[v])
+                    push(u, v, excess, excess_vertices, capacity, flow);
+                else
+                    seen[u]++;
+            }
+            else {
+                relabel(u, height, capacity, flow);
+                seen[u] = 0;
+            }
+        }
+    }
 
     int EdmondKarp(int s, int t, vector<vector<int>> & adj, vector<vector<int>> & capacity) {
         int rez = 0, new_flow;
@@ -154,7 +187,6 @@ protected:
 
         return rez_flow;
     }
-
     vector<std::pair<int, int> > stCut(int s, int t, vector<vector<int>> & adj, vector<vector<int>> & capacity) {
         Dinic(s, t, adj, capacity);
         vector<int> level(n_vertices, -1);
@@ -173,12 +205,41 @@ protected:
         return cutEdges;
 
     }
+    int PushRelabel(int s, int t, vector<vector<int>> & capacity) {
+        vector<vector<int>> flow;
+        vector<int> height, excess, seen;
+        std::queue<int> excess_vertices;
+
+        height.assign(n_vertices, 0);
+        height[s] = n_vertices;
+        flow.assign(n_vertices, vector<int>(n_vertices, 0));
+        excess.assign(n_vertices, 0);
+        excess[s] = 1000000000;
+        for (int i = 0; i < n_vertices; i++) {
+            if (i != s)
+                push(s, i, excess, excess_vertices, capacity, flow);
+        }
+        seen.assign(n_vertices, 0);
+
+        while (!excess_vertices.empty()) {
+            int u = excess_vertices.front();
+            excess_vertices.pop();
+            if (u != s && u != t)
+                discharge(u, excess, seen, height, excess_vertices, capacity, flow);
+        }
+
+        int max_flow = 0;
+        for (int i = 0; i < n_vertices; i++)
+            max_flow += flow[i][t];
+        return max_flow;
+    }
+
 public:
     virtual int solveEdmondKarp(int, int) = 0;
     virtual int solveFordFulkerson(int, int) = 0;
     virtual int solveDinic(int, int) = 0;
     virtual vector<std::pair<int, int> > solveSTCut(int, int) = 0;
-
+    virtual int solvePushRelabel(int, int) = 0;
 
     virtual void add_edge(int pFrom, int pTo) = 0;
     virtual void add_edge(int pFrom, int pTo, int weight) = 0;
@@ -212,7 +273,7 @@ public:
     void add_edge(int pFrom, int pTo) { add_edge(pFrom, pTo, default_edge_weight); }
     void add_vertex() {
         n_vertices++;
-        for (vector<int> & vec : matrix)
+        for (vector<int> vec : matrix)
             vec.push_back(0);
         matrix.push_back(vector<int>(n_vertices, 0));
         adjList.push_back(vector<int>());
@@ -267,6 +328,13 @@ public:
         vector<vector<int>> capacity(matrix);
 
         return stCut(s, t, adjList, capacity);
+    }
+    int solvePushRelabel(int s = 0, int t = -1) {
+        if (t == -1)t = n_vertices - 1;
+
+        vector<vector<int>> capacity(matrix);
+
+        return PushRelabel(s, t, capacity);
     }
 
 };
@@ -358,7 +426,11 @@ public:
 
         return stCut(s, t, temp_adj, capacity);
     }
-
+    int solvePushRelabel(int s = 0, int t = -1) {
+        if (t == -1)t = n_vertices - 1;
+        prepare_capacity();
+        return PushRelabel(s, t, capacity);
+    }
 };
 
 int main() {
@@ -376,11 +448,14 @@ int main() {
 
     std::cout << grf.solveEdmondKarp() << " ";
     std::cout << grf.solveFordFulkerson() << " ";
-    std::cout << grf.solveDinic() << "\n";
+    std::cout << grf.solveDinic() << " ";
+    std::cout << grf.solvePushRelabel() << std::endl;
     grf.solveSTCut(); std::cout << std::endl;
+
     std::cout << grf1.solveEdmondKarp() << " ";
     std::cout << grf1.solveFordFulkerson() << " ";
-    std::cout << grf1.solveDinic() << "\n";
+    std::cout << grf1.solveDinic() << " ";
+    std::cout << grf1.solvePushRelabel() << std::endl;
     grf1.solveSTCut(); std::cout << std::endl;
 
     return 0;
