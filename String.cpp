@@ -1,5 +1,8 @@
 #include <iostream>
 #include <vector>
+#include <cmath>
+
+
 
 class String {
     char * str;
@@ -8,27 +11,34 @@ class String {
 public:
     String() { length = 0; str = new char[1]; str[0] = 0; }
     ~String() { if (str != nullptr) delete[] str; }
-    String(String & o);
     String(const char * o);
+    String(const String & o);
     String operator=(const String & o);
     char & operator[](unsigned int i) { return str[i]; }
     char operator[] (unsigned int i)const { return str[i]; }
-    String(const String & other);
-    friend std::ostream & operator<<(std::ostream & out, const String & Str) { out << Str.str; }
-    // Implement KMP on the whole string
+
+    friend std::ostream & operator<<(std::ostream & out, const String & Str) { out << Str.str; return out; }
+
+
     std::vector<int> findAllSubStr(const String & subStr);
-
-    // Implement KMP until the first match
     int findFirstSubStr(const String & subStr);
-
-    // Implement KMP in reverse (search from the end of both strings).
-    // The lookup table should be done from last character
     int findLastSubStr(const String & subStr);
-
     std::vector<int> findAllSubStrReverse(const String & subStr);
-};
 
-String::String(String & o)
+    std::vector<int> rollingHash(const String & subStr);
+    unsigned int size() const { return length; }
+
+    String substr(unsigned int len) {
+        if (len >= length) return *this;
+        char pom = str[len];
+        str[len] = 0;
+        String rez(str);
+        str[len] = pom;
+        return rez;
+    }
+
+};
+String::String(const String & o)
 {
     length = o.length;
     str = new char[length + 1];
@@ -36,7 +46,6 @@ String::String(String & o)
         str[i] = o.str[i];
     }
 }
-
 String::String(const char * o)
 {
     for (length = 0; o[length] != 0; length++);
@@ -44,9 +53,10 @@ String::String(const char * o)
     for (int i = 0; i <= length; i++)
         str[i] = o[i];
 }
-
 String String::operator=(const String & o)
 {
+    if (this == &o) return *this;
+
     if (str != nullptr) delete[] str;
     length = o.length;
     str = new char[length + 1];
@@ -55,6 +65,58 @@ String String::operator=(const String & o)
     }
     return *this;
 }
+
+
+int Hash1(String item) {
+
+    int rez = 0;
+
+    for (int i = 0; i < item.size(); i++) {
+        rez += item[i] - 'a' + 1;
+    }
+
+
+    return rez;
+}
+int  Hash(String item) {
+
+    const long long b = 26;
+    const long long m = 1e9 + 9;
+    unsigned long long p_pow = 1;
+    unsigned long long rez = 0;
+
+    for (int i = 0; i < item.size(); i++) {
+
+        rez = (rez + (item[i] - 'a' + 1) * p_pow) % m;
+        p_pow = (p_pow * b) % m;
+    }
+    return rez;
+}
+
+void update_hash1(int & val, char old, char nov, int len) {
+
+    val = val - old + nov;
+
+}
+void update_hash(int & val, char old, char nov, int len) {
+
+    int m = 1e9 + 9;
+
+    val = (val - (old - 'a' + 1)) % m;
+    val /= 26;
+
+
+    int pom = (nov - 'a' + 1);
+
+
+    float pom1 = pow(26, len - 1);
+
+    val += pom * pom1;
+
+    val %= m;
+
+}
+
 
 
 std::vector<int> String::findAllSubStr(const String & subStr)
@@ -79,7 +141,7 @@ std::vector<int> String::findAllSubStr(const String & subStr)
     //search              
     i = j = 0;
 
-    while (i < length)
+    while (i <= length)
     {
         if (j == subStr.length) {
             rez.push_back(i - j);
@@ -96,7 +158,6 @@ std::vector<int> String::findAllSubStr(const String & subStr)
     }
     return rez;
 }
-
 int String::findFirstSubStr(const String & subStr)
 {
     int rez;
@@ -134,7 +195,6 @@ int String::findFirstSubStr(const String & subStr)
     }
     return -1; //no solution found
 }
-
 std::vector<int> String::findAllSubStrReverse(const String & subStr)
 
 {
@@ -228,12 +288,49 @@ int String::findLastSubStr(const String & subStr)
 
 }
 
+std::vector<int> String::rollingHash(const String & subStr)
+{
+    std::vector<int> rez;
 
+    int subStr_val = Hash(subStr);
+    int val = 0;
+
+
+
+    for (int i = 0; i <= (int)length - (int)subStr.size(); i++) {
+        if (i != 0) {
+            update_hash(val, str[i - 1], str[i + subStr.size() - 1], subStr.size());
+        }
+        else {
+            val = Hash(substr(subStr.size()));
+        }
+
+
+        if (val == subStr_val) {
+            bool same = true;
+            for (int j = 0; j < subStr.size(); j++) {
+                if (subStr[j] != str[i + j]) {
+                    same = false;
+                    break;
+                }
+            }
+            if (same) {
+                rez.push_back(i);
+
+            }
+        }
+    }
+    return rez;
+}
 
 
 int main() {
-    String string("abcababdabababaabacababaababaabac");
-    String item("ababaaba");
+    String string("aabbaaabb");
+    String item("bb");
+
+
+
+
     auto vec = string.findAllSubStr(item);
     for (auto el : vec) {
         std::cout << el << " ";
@@ -244,6 +341,13 @@ int main() {
     for (auto el : vec) {
         std::cout << el << " ";
     }
+    std::cout << std::endl;
+
+    vec = string.rollingHash(item);
+    for (auto el : vec) {
+        std::cout << el << " ";
+    }
+
 }
 
 
