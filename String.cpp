@@ -49,8 +49,8 @@ public:
     int findLastSubStr(const String & subStr);
     std::vector<int> findAllSubStrReverse(const String & subStr);
 
-    std::vector<int> rollingHashSum(const String & subStr);
-    std::vector<int> rollingHashPow(const String & subStr);
+    std::vector<int> rabinKarpSum(const String & subStr);
+    std::vector<int> rabinKarpPow(const String & subStr);
 
 
     String substr(unsigned int len) {
@@ -313,7 +313,7 @@ int String::findLastSubStr(const String & subStr)
 
 }
 
-std::vector<int> String::rollingHashSum(const String & subStr)
+std::vector<int> String::rabinKarpSum(const String & subStr)
 {
     std::vector<int> rez;
 
@@ -347,7 +347,7 @@ std::vector<int> String::rollingHashSum(const String & subStr)
     }
     return rez;
 }
-std::vector<int> String::rollingHashPow(const String & subStr)
+std::vector<int> String::rabinKarpPow(const String & subStr)
 {
     std::vector<int> rez;
 
@@ -409,12 +409,12 @@ int main() {
     }
     std::cout << std::endl;
 
-    vec = string.rollingHashSum(item);
+    vec = string.rabinKarpSum(item);
     for (auto el : vec) {
         std::cout << el << " ";
     }
     std::cout << std::endl;
-    vec = string.rollingHashPow(item);
+    vec = string.rabinKarpPow(item);
     for (auto el : vec) {
         std::cout << el << " ";
     }
