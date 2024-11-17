@@ -2,10 +2,24 @@
 #include <stack>
 using namespace std;
 
-const unsigned int AlphabetSize = 26; //eng: 26     mkd: 31
+
+// const unsigned int AlphabetSize = 26; //eng: 26     mkd: 31
+// const unsigned char FirstLetter = 'a';//eng: 'a'    mkd:   
+// typedef char Char;                    //eng: char   mkd:
+// typedef string String;                //eng: string mkd:
+// typedef ostream Ostream; 
+// #define Cout cout
+
+const unsigned int AlphabetSize = 31; //eng: 26     mkd: 31
 const unsigned char FirstLetter = 'a';//eng: 'a'    mkd:   
-typedef char Char;                    //eng: char   mkd:
-typedef string String;                //eng: string mkd:
+typedef wchar_t Char;                    //eng: char   mkd:
+typedef wstring String;
+typedef wostream Ostream;
+#define Cout wcout
+
+
+String IndexToLetter(int i);
+
 
 struct TrieNode {
     bool word_end = false;
@@ -21,7 +35,7 @@ struct TrieNode {
 class Trie {
     TrieNode * root;
 
-    void preorder(TrieNode * node, String str, ostream & out) {
+    void preorder(TrieNode * node, String str, Ostream & out) {
         if (node->word_end)
             out << str << endl;
         for (int i = 0; i < AlphabetSize; i++) {
@@ -54,8 +68,8 @@ public:
         }
         return true;
     }
-    void print(ostream & out = cout) {
-        preorder(root, "", out);
+    void print(Ostream & out = Cout) {
+        preorder(root, String(), out);
     }
 
     Trie() {
@@ -71,26 +85,4 @@ public:
 };
 
 
-
-
-int main() {
-
-    Trie tree;
-
-    string str;
-    for (int i = 0; i < 10; i++)
-    {
-        cin >> str;
-        tree.add(str);
-        cout << tree.exists(str) << endl;
-    }
-    for (int i = 0; i < 4; i++) {
-        cin >> str;
-        cout << tree.exists(str) << endl;
-    }
-    tree.print();
-
-
-
-    return 0;
-}
+ 
