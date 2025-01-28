@@ -1,32 +1,28 @@
 #include <iostream>
 #include <cstdint>
+#include<vector>
 
 enum SIGN {
     POS = 0,
     NEG
 };
-
+using std::vector;
 class Number
 {
 private:
-    uint8_t * number;
+    vector<short int>  number;
     SIGN sign;
-    int length;
 
     void Assign(int value);
-    void Assign(Number & other);
+    void Assign(const Number & other);
 public:
-    Number(int value = 0, int digits = 10) {
-        length = digits;
-        number = new uint8_t[digits];
+    Number(int value = 0, int digits = 10) : number(digits) {
         Assign(value);
     }
-    Number(Number & other) {
-        number = new uint8_t[other.length];
+    Number(const Number & other) : number(other.number) {
         Assign(other);
     }
-    ~Number() { if (number != nullptr)delete[] number; }
-    Number & operator=(Number & other) {
+    Number & operator=(Number other) {
         Assign(other);
         return *this;
     }
@@ -34,8 +30,24 @@ public:
         Assign(value);
         return *this;
     }
-    Number operator+(Number & other);
+    short int & operator[](int i) {
+        return number[i];
+    }
+    short int operator[](int i) const {
+        if (i < number.size()) return number[i];
+        return 0;
+    }
+    Number operator+(const Number & other) const;
     Number operator+(int value) { Number other(value); this->operator+(other); }
+    void print() {
+        int i = number.size();
+        for (; number[i] == 0; i--);
+        for (; i >= 0; i--)
+            std::cout << number[i];
+    }
+    void addDigit(short int dig = 0) {
+        number.push_back(dig);
+    }
 
 
 };
@@ -49,28 +61,43 @@ void Number::Assign(int value)
     else {
         sign = POS;
     }
-    for (int i = 0; i < length && value != 0; i++) {
+    for (int i = 0; i < number.size() && value != 0; i++) {
         number[i] = value % 10;
         value /= 10;
     }
 
 }
 
-void Number::Assign(Number & other)
+void Number::Assign(const Number & other)
 {
+    if (number.size() < other.number.size())
+        number.resize(other.number.size(), 0);
     int i;
-    for (i = 0; i < std::min(length, other.length); i++)
-        number[i] = other.number[i];
-    for (; i < length; i++)
-        number[i] = 0;
+    for (i = 0; i < std::max(number.size(), other.number.size()); i++)
+        number[i] = other[i];
     sign = other.sign;
 }
 
-Number Number::operator+(Number & other)
+Number Number::operator+(const Number & other) const
 {
+    Number rez(0, std::max(number.size(), other.number.size()));
     if (!(this->sign ^ other.sign)) {
-
+        bool carry = 0;
+        for (int i = 0; i < std::max(number.size(), other.number.size()); i++) {
+            int temp = (this->operator[])(i) + other[i] + carry;
+            rez[i] = temp % 10;
+            carry = temp / 10;
+        }
+        if (carry)rez.addDigit(1);
+        return rez;
     }
     return *this;
 }
 
+int main() {
+
+    int a, b; std::cin >> a >> b;
+    Number A(a), B(b); A.print(); std::cout << " "; B.print(); std::cout << " "; Number c(0, 3); c = A; c.print();
+    c = A + B; std::cout << " "; c.print();
+
+}
