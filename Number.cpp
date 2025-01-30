@@ -1,12 +1,14 @@
 #include <iostream>
 #include <cstdint>
 #include<vector>
-
+#include <stack>
 enum SIGN {
     POS = 0,
     NEG
 };
+
 using std::vector;
+
 class Number
 {
 private:
@@ -62,6 +64,8 @@ public:
     Number operator*(const Number & other) const;
     Number operator*(int value) { Number other(value); return this->operator*(other); }
 
+    Number operator/(const Number & other) const;
+    Number operator/(int value) { Number other(value); return this->operator/(other); }
 
     bool operator<(const Number & other) const;
     void print() const {
@@ -215,6 +219,66 @@ Number Number::operator*(const Number & other) const
     for (int i = 0; i < otherLen; i++) {
         rez = rez + SingleDigitMultiplication(other[i], i);
     }
+    rez.sign = ((sign^other.sign)?NEG:POS);
+    return rez;
+}
+
+Number Number::operator/(const Number & other) const  // Pisuvajki go ova nauciv deka ne znam da delam 
+{
+    Number rez(0,number.size());
+    std::stack<int> rezDigs;
+    Number subtructee(*this);
+    Number subtractor;
+    Number withOne;
+    int osLen=other.getLength();
+    int firstDig = other[osLen-1];
+    int DigLen=subtructee.getLength();
+    while (osLen+rezDigs.size()<=DigLen)
+    {
+
+        int L=0,R=9,M=4;
+        while (L<=R)
+        {
+            int DigMod=DigLen-rezDigs.size()-osLen;
+            if(DigMod<0)DigMod=0;
+            withOne=other.SingleDigitMultiplication(1, DigMod);
+            subtractor = other.SingleDigitMultiplication(M, DigMod);
+            Number tempRez(subtructee-subtractor); 
+            /*
+                subtractee : other = M
+                -subtractor
+                -----------
+                tempRez
+                ...
+            */
+
+
+
+            if(tempRez.sign==NEG){
+                R=M;
+                M= (L+R)/2;
+            }
+            else if(!(tempRez<withOne))
+            {
+                L=M+1;
+                M=(L+R)/2;
+            }
+            else{
+                subtructee = tempRez;
+                L=R+1; //break
+            }
+        }
+         
+        rezDigs.push(M);
+        
+    }
+    for(int i=0; !rezDigs.empty();i++){
+        rez[i]=rezDigs.top();
+        rezDigs.pop();
+    }
+    rez.sign = ((sign^other.sign)?NEG:POS);
+    
+
     return rez;
 }
 
@@ -242,14 +306,15 @@ bool Number::operator<(const Number & other) const
 }
 
 int main() {
+
     int a, b;
     while (std::cin >> a >> b)
     {
 
         Number A(a), B(b);
-        A.print(); std::cout << " "; B.print(); std::cout << " "; (A * B).print();     std::cout << "\n";
+        A.print(); std::cout << " "; B.print(); std::cout << " "; (A / B).print();     std::cout << "\n";
     }
 
 
 
-}
+}  
