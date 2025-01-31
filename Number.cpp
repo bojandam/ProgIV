@@ -1,13 +1,17 @@
 #include <iostream>
 #include <cstdint>
-#include<vector>
+#include <vector>
 #include <stack>
+#include <cstdlib>
+#include <ctime>
+
 enum SIGN {
     POS = 0,
     NEG
 };
 
 using std::vector;
+
 
 class Number
 {
@@ -16,16 +20,23 @@ private:
     vector<short int>  number;
     SIGN sign;
 
+    vector<short int> moduloRez;
+
     void Assign(int value);
     void Assign(const Number & other);
 public:
     Number SingleDigitMultiplication(int dig, int offset) const;
+    friend Number generateRandomNumber(int);
 public:
     Number(int value = 0, int digits = 10) : number(digits) {
         Assign(value);
     }
     Number(const Number & other) : number(other.number) {
         Assign(other);
+    }
+    Number(vector<short> vec,SIGN sign = POS){
+        number=vec;
+        this->sign=sign;
     }
     Number & operator=(Number other) {
         Assign(other);
@@ -64,8 +75,11 @@ public:
     Number operator*(const Number & other) const;
     Number operator*(int value) { Number other(value); return this->operator*(other); }
 
-    Number operator/(const Number & other) const;
+    Number operator/(const Number & other)  ;
     Number operator/(int value) { Number other(value); return this->operator/(other); }
+
+    Number operator%(const Number & other)  ;
+    Number operator%(int value) {Number other(value); return this->operator%(other); }
 
     bool operator<(const Number & other) const;
     void print() const {
@@ -223,7 +237,7 @@ Number Number::operator*(const Number & other) const
     return rez;
 }
 
-Number Number::operator/(const Number & other) const  // Pisuvajki go ova nauciv deka ne znam da delam 
+Number Number::operator/(const Number & other)  // Pisuvajki go ova nauciv deka ne znam da delam 
 {
     Number rez(0,number.size());
     std::stack<int> rezDigs;
@@ -244,15 +258,6 @@ Number Number::operator/(const Number & other) const  // Pisuvajki go ova nauciv
             withOne=other.SingleDigitMultiplication(1, DigMod);
             subtractor = other.SingleDigitMultiplication(M, DigMod);
             Number tempRez(subtructee-subtractor); 
-            /*
-                subtractee : other = M
-                -subtractor
-                -----------
-                tempRez
-                ...
-            */
-
-
 
             if(tempRez.sign==NEG){
                 R=M;
@@ -278,8 +283,15 @@ Number Number::operator/(const Number & other) const  // Pisuvajki go ova nauciv
     }
     rez.sign = ((sign^other.sign)?NEG:POS);
     
+    moduloRez = vector<short>(subtructee.number);
 
     return rez;
+}
+
+Number Number::operator%(const Number & other) 
+{
+    (this->operator/)(other);
+    return Number(moduloRez);
 }
 
 bool Number::operator<(const Number & other) const
@@ -305,14 +317,30 @@ bool Number::operator<(const Number & other) const
         return false;
 }
 
+Number generateRandomNumber(int digs){
+    Number num(0,digs);
+    srand(time(0));
+
+    for(int i=0;i<digs;i++)
+    {
+        num[i] = rand()%10;   
+    }
+    
+    return num;
+}
+
+
 int main() {
 
+
+   
     int a, b;
+    (generateRandomNumber(50)*generateRandomNumber(50)).print();
     while (std::cin >> a >> b)
     {
 
         Number A(a), B(b);
-        A.print(); std::cout << " "; B.print(); std::cout << " "; (A / B).print();     std::cout << "\n";
+        A.print(); std::cout << " "; B.print(); std::cout << " "; (A / B).print(); std::cout<< " "; (A%B).print();    std::cout << "\n";
     }
 
 
