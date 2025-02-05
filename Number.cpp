@@ -4,6 +4,7 @@
 #include <stack>
 #include <cstdlib>
 #include <ctime>
+#include <utility>
 
 enum SIGN {
     POS = 0,
@@ -82,6 +83,11 @@ public:
     Number operator%(int value) {Number other(value); return this->operator%(other); }
 
     bool operator<(const Number & other) const;
+    bool operator<(int value) {Number other(value); return this->operator<(other); }
+
+    bool operator==(const Number & other) const;
+    bool operator==(int value) {Number other(value); return this->operator==(other); }
+
     void print() const {
         if (sign == NEG) std::cout << "-";
         int i = number.size() - 1;
@@ -97,7 +103,22 @@ public:
     void addDigit(short int dig = 0) {
         number.push_back(dig);
     }
-
+    vector<std::pair<Number, int> > factor(){
+        vector<std::pair<Number, int>> rez;
+        Number x = *this;
+        for (Number i = 2; i * i < x + 1 ; i = i+2) {
+            int k = 0;
+            while (!((x % i) == 0))
+            {
+                k++; x = x / i;
+            }
+            if (k) { rez.push_back({ i, k }); }
+            if (x == 1) { break; }
+            if (i == 2) i= i-1;
+        }
+        if (!(x==0 || x==1)) rez.push_back({ x  ,1 });
+        return rez;
+    }
 
 };
 
@@ -317,9 +338,24 @@ bool Number::operator<(const Number & other) const
         return false;
 }
 
+bool Number::operator==(const Number & other) const
+{
+    if(this->sign != other.sign)
+        return false;
+    
+    for (int i = std::max(number.size(), other.number.size()); i >= 0; i--)
+        if ((this->operator[])(i) != other[i])
+            return false;
+    return true;
+}
+
+bool Sranded = false;
 Number generateRandomNumber(int digs){
     Number num(0,digs);
-    srand(time(0));
+    if(!Sranded){
+        srand(time(0));
+        Sranded =true;
+    }
 
     for(int i=0;i<digs;i++)
     {
@@ -335,13 +371,30 @@ int main() {
 
    
     int a, b;
-    (generateRandomNumber(50)*generateRandomNumber(50)).print();
-    while (std::cin >> a >> b)
-    {
+    // Number A(generateRandomNumber(50)); 
+    // Number B(generateRandomNumber(50));
+    // // while (std::cin >> a >> b)
+    // // {
 
-        Number A(a), B(b);
-        A.print(); std::cout << " "; B.print(); std::cout << " "; (A / B).print(); std::cout<< " "; (A%B).print();    std::cout << "\n";
+    // //     Number A(a), B(b);
+    // A.print(); std::cout << " "; B.print(); std::cout << "\n"; 
+    // (A + B).print(); std::cout<< "\n";
+    // (A - B).print(); std::cout<< "\n";
+    // (A * B).print(); std::cout<< "\n";
+    // (A / B).print(); std::cout<< "\n";
+    // (A % B).print(); std::cout<< "\n";
+    // }
+
+    while (std::cin>>a)
+    {   
+        Number A(a);
+        auto f = A.factor();
+        for (auto el : f) {
+             el.first.print(); std::cout<< "^" << el.second << ", ";
+        }
+        std::cout << std::endl;
     }
+    
 
 
 
